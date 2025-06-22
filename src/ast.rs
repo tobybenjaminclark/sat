@@ -7,6 +7,7 @@ use nom::{
     multi::fold_many0,
     sequence::{delimited, preceded},
 };
+use std::fmt;
 
 
 
@@ -16,7 +17,41 @@ pub enum AST {
     Conjunction(Box<AST>, Box<AST>),
     Disjunction(Box<AST>, Box<AST>),
     Implication(Box<AST>, Box<AST>),
+    BiImplication(Box<AST>, Box<AST>),
     Negation(Box<AST>),
+}
+
+
+
+impl fmt::Display for AST {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AST::Variable(name) => write!(f, "{}", name),
+
+            AST::Negation(inner) => {
+                match **inner {
+                    AST::Variable(_) | AST::Negation(_) => write!(f, "¬{}", inner),
+                    _ => write!(f, "¬({})", inner),
+                }
+            }
+
+            AST::Conjunction(left, right) => {
+                write!(f, "({} ∧ {})", left, right)
+            }
+
+            AST::Disjunction(left, right) => {
+                write!(f, "({} ∨ {})", left, right)
+            }
+
+            AST::Implication(left, right) => {
+                write!(f, "({} → {})", left, right)
+            }
+
+            AST::BiImplication(left, right) => {
+                write!(f, "({} ↔ {})", left, right)
+            }
+        }
+    }
 }
 
 
@@ -104,6 +139,25 @@ fn implication(input: &str) -> IResult<&str, AST> {
 
 
 
+fn biimplication(input: &str) -> IResult<&str, AST> {
+    let (input, lhs) = implication(input)?;
+
+    fold_many0(
+        preceded(
+            ws(alt((tag("<->"), tag("↔"), tag("⇔")))),
+            implication,
+        ),
+        move || lhs.clone(),
+        |acc, val| AST::Disjunction(
+            Box::new(AST::Conjunction(Box::new(acc.clone()), Box::new(val.clone()))),
+            Box::new(AST::Conjunction(Box::new(AST::Negation(Box::new(acc))), Box::new(AST::Negation(Box::new(val))))),
+        ),
+    )(input)
+}
+
+
+
+
 pub fn expr(input: &str) -> IResult<&str, AST> {
-    implication(input)
+    biimplication(input)
 }
