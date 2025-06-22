@@ -8,19 +8,19 @@ use crate::vargen::get_fresh_var;
 pub fn tseytin(formula: AST) -> Vec<AST> {
     let hashmap: &mut HashMap<AST, String> = &mut HashMap::new();
     let toplevel = _tseytin(formula, hashmap);
-    hashmap.insert(toplevel, format!("v{}", (hashmap.len() + 1).to_string()));
 
     let mut clauses: Vec<AST> = vec![];
     for (idx, (k, v)) in hashmap.iter().enumerate() {
         let _ast = BiImplication(Box::from(k.clone()), Box::from(Variable((*v.clone()).parse().unwrap())));
-        println!("{idx} : {}", _ast);
         clauses.push(_ast)
     }
 
     // fold conjunction over the clauses and return
-    let fclauses: Vec<AST> = hashmap.iter()
+    let mut fclauses: Vec<AST> = hashmap.iter()
         .map(|(k, v)| BiImplication(Box::new(k.clone()), Box::new(Variable(v.clone()))))
         .collect();
+
+    fclauses.push(toplevel);
     fclauses
 }
 
@@ -49,8 +49,10 @@ fn _tseytin(formula: AST, mapping: &mut HashMap<AST, String>) -> AST {
         }
 
         Negation(var) => {
+            let formula_t = _tseytin(*var, mapping);
+
             let variden = get_fresh_var();
-            mapping.insert(formula, variden.clone());
+            mapping.insert(Negation(Box::from(formula_t)), variden.clone());
             return Variable(variden);
         }
     }
