@@ -10,7 +10,7 @@ use nom::{
 
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum AST {
     Variable(String),
     Conjunction(Box<AST>, Box<AST>),
@@ -90,14 +90,15 @@ fn disjunction(input: &str) -> IResult<&str, AST> {
 
 fn implication(input: &str) -> IResult<&str, AST> {
     let (input, lhs) = disjunction(input)?;
-    if let Ok((input, rhs)) = preceded(
+
+    let mut rest = preceded(
         ws(alt((tag("->"), tag("→"), tag("⇒")))),
         implication,
-    )(input)
-    {
-        Ok((input, AST::Implication(Box::new(lhs), Box::new(rhs))))
-    } else {
-        Ok((input, lhs))
+    );
+
+    match rest(input) {
+        Ok((input, rhs)) => Ok((input, AST::Implication(Box::new(lhs), Box::new(rhs)))),
+        Err(_) => Ok((input, lhs)),
     }
 }
 
