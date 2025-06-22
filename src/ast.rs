@@ -127,7 +127,7 @@ fn implication(input: &str) -> IResult<&str, AST> {
     let (input, lhs) = disjunction(input)?;
 
     let mut rest = preceded(
-        ws(alt((tag("->"), tag("→"), tag("⇒")))),
+        ws(alt((tag("->"), tag("→")))), // Remove '⇒' here
         implication,
     );
 
@@ -144,14 +144,11 @@ fn biimplication(input: &str) -> IResult<&str, AST> {
 
     fold_many0(
         preceded(
-            ws(alt((tag("<->"), tag("↔"), tag("⇔")))),
+            ws(alt((tag("<->"), tag("↔"), tag("⇔"), tag("⇒")))), // Add '⇒' here for biimplication
             implication,
         ),
         move || lhs.clone(),
-        |acc, val| AST::Disjunction(
-            Box::new(AST::Conjunction(Box::new(acc.clone()), Box::new(val.clone()))),
-            Box::new(AST::Conjunction(Box::new(AST::Negation(Box::new(acc))), Box::new(AST::Negation(Box::new(val))))),
-        ),
+        |acc, val| AST::BiImplication(Box::new(acc), Box::new(val)),  // Use BiImplication here
     )(input)
 }
 
