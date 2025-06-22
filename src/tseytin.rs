@@ -5,7 +5,7 @@ use crate::vargen::get_fresh_var;
 
 
 
-pub fn tseytin(formula: AST) -> () {
+pub fn tseytin(formula: AST) -> Vec<AST> {
     let hashmap: &mut HashMap<AST, String> = &mut HashMap::new();
     let toplevel = _tseytin(formula, hashmap);
     hashmap.insert(toplevel, format!("v{}", (hashmap.len() + 1).to_string()));
@@ -16,6 +16,12 @@ pub fn tseytin(formula: AST) -> () {
         println!("{idx} : {}", _ast);
         clauses.push(_ast)
     }
+
+    // fold conjunction over the clauses and return
+    let fclauses: Vec<AST> = hashmap.iter()
+        .map(|(k, v)| BiImplication(Box::new(k.clone()), Box::new(Variable(v.clone()))))
+        .collect();
+    fclauses
 }
 
 

@@ -1,8 +1,10 @@
 mod ast;
 mod tseytin;
 mod vargen;
+mod cnf;
 
 use ast::expr;
+use crate::cnf::cnf;
 use crate::tseytin::tseytin;
 
 fn main() {
@@ -10,7 +12,12 @@ fn main() {
     match expr(input) {
         Ok((_rest, ast)) => {
             println!("{:#?}", ast);
-            tseytin(ast);
+            let tast = tseytin(ast);
+            println!("{:?}", tast);
+            let acnf = cnf(tast);
+            for ast in acnf {
+                println!("{ast}");
+            }
         },
         Err(err) => eprintln!("Error: {:?}", err),
     }
