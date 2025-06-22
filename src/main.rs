@@ -16,12 +16,12 @@ fn main() {
             println!("Tseytin Output:");
             let tast = tseytin(ast);
             for (idx, ast) in tast.clone().iter().enumerate() {
-                println!("  [Clause {idx}] ‣‣ {ast}");
+                println!("  [Tseytin Clause {idx}] ‣‣ {ast}");
             }
 
             println!("\nCNF Clauses:");
-            for ast in cnf(tast) {
-                println!("  ‣ {ast}");
+            for (idx, ast) in cnf(tast).iter().enumerate() {
+                println!("  [CNF Clause {idx}] ‣‣ {ast}");
             }
         },
         Err(err) => eprintln!("Error: {:?}", err),

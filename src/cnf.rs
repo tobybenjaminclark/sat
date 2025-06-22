@@ -46,7 +46,6 @@ pub fn _cnf(node: AST) -> Vec<AST> {
                     clauses
                 }
                 _ => unreachable!()
-
             }
         }
         Variable(v) => {
