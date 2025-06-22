@@ -11,13 +11,13 @@ pub fn tseytin(formula: AST) -> Vec<AST> {
 
     let mut clauses: Vec<AST> = vec![];
     for (idx, (k, v)) in hashmap.iter().enumerate() {
-        let _ast = BiImplication(Box::from(k.clone()), Box::from(Variable((*v.clone()).parse().unwrap())));
+        let _ast = BiImplication(Box::from(Variable((*v.clone()).parse().unwrap())), Box::from(k.clone()));
         clauses.push(_ast)
     }
 
     // fold conjunction over the clauses and return
     let mut fclauses: Vec<AST> = hashmap.iter()
-        .map(|(k, v)| BiImplication(Box::new(k.clone()), Box::new(Variable(v.clone()))))
+        .map(|(k, v)| BiImplication(Box::new(Variable(v.clone())), Box::new(k.clone())))
         .collect();
 
     fclauses.push(toplevel);

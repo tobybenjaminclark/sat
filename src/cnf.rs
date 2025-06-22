@@ -1,79 +1,67 @@
 use crate::ast::AST;
 use crate::ast::AST::{BiImplication, Conjunction, Disjunction, Implication, Negation, Variable};
 
-/* called after tseytin */
-fn to_cnf(ast: AST) -> Vec<AST> {
-    match ast {
-        Conjunction(l, r) => {
-            let mut left_clauses = to_cnf(*l);
-            let mut right_clauses = to_cnf(*r);
-            left_clauses.append(&mut right_clauses);
-            left_clauses
-        }
-        Disjunction(l, r) => {
-            let left = to_cnf(*l);
-            let right = to_cnf(*r);
-            // Distribute OR over AND:
-            let mut new_clauses = vec![];
-            for lc in &left {
-                for rc in &right {
-                    new_clauses.push(distribute_or(lc.clone(), rc.clone()));
+/* built on https://www.youtube.com/watch?v=v2uW258qIsM */
+pub fn _cnf(node: AST) -> Vec<AST> {
+    match node.clone() {
+        BiImplication(a, b) => {
+            match (*a.clone(), *b.clone()) {
+                (Variable(p), Negation(q)) => {
+                    let mut clauses: Vec<AST>= vec![];
+                    clauses.push(Disjunction(Box::from(Variable(p.clone())), q.clone()));
+                    clauses.push(Disjunction(Box::from(Negation(Box::from(Variable(p.clone())))), Box::from(Negation(q.clone()))));
+                    clauses
                 }
+                (Variable(pstr), Disjunction(q, r)) => {
+                    let mut p = Variable(pstr.to_string());
+                    let mut clauses: Vec<AST>= vec![];
+                    clauses.push(Disjunction(Negation(p.clone().into()).into(), Disjunction(q.clone(), r.clone()).into()));
+                    clauses.push(Disjunction(Negation(q.clone().into()).into(), p.clone().into()));
+                    clauses.push(Disjunction(Negation(r.clone().into()).into(), p.clone().into()));
+                    clauses
+                }
+                (Variable(pstr), Conjunction(q, r)) => {
+                    let mut p = Variable(pstr.to_string());
+                    let mut clauses: Vec<AST>= vec![];
+                    clauses.push(Disjunction(Box::from(p.clone()), Box::from(Disjunction(Negation(q.clone()).into(), Negation(r.clone()).into()))));
+                    clauses.push(Disjunction(Negation(p.clone().into()).into(), q.clone()));
+                    clauses.push(Disjunction(Negation(p.clone().into()).into(), r.clone()));
+                    clauses
+                }
+                (Variable(pstr), BiImplication(q, r)) => {
+                    let mut p = Variable(pstr.to_string());
+                    let mut clauses: Vec<AST>= vec![];
+                    clauses.push(Disjunction(p.clone().into(), Disjunction(q.clone(), r.clone()).into()));
+                    clauses.push(Disjunction(Box::from(p.clone()), Box::from(Disjunction(Negation(q.clone()).into(), Negation(r.clone()).into()))));
+                    clauses.push(Disjunction(Box::from(q.clone()), Box::from(Disjunction(Negation(p.clone().into()).into(), Negation(r.clone()).into()))));
+                    clauses.push(Disjunction(Box::from(r.clone()), Box::from(Disjunction(Negation(p.clone().into()).into(), Negation(q.clone()).into()))));
+                    clauses
+                }
+                (Variable(pstr), Implication(q, r)) => {
+                    let mut p = Variable(pstr.to_string());
+                    let mut clauses: Vec<AST> = vec![];
+                    clauses.push(Disjunction(Box::from(Negation(Box::from(p.clone()))), Box::from(Disjunction(Negation(q.clone()).into(), r.clone()))));
+                    clauses.push(Disjunction(q.clone(), p.clone().into()));
+                    clauses.push(Disjunction(Box::from(Negation(r.clone())), p.clone().into()));
+                    clauses
+                }
+                _ => unreachable!()
+
             }
-            new_clauses
         }
-        Negation(ref inner) => vec![ast],
-        Variable(_) => vec![ast],
-        _ => vec![ast],
+        Variable(v) => {
+            vec![node]
+        }
+        _ => {
+            unreachable!()
+        }
     }
 }
 
-
-
-fn negate(ast: AST) -> AST {
-    match ast {
-        Negation(inner) => *inner, /* eliminate !!P */
-        Conjunction(l, r) => Disjunction(Box::new(negate(*l)), Box::new(negate(*r))),
-        Disjunction(l, r) => Conjunction(Box::new(negate(*l)), Box::new(negate(*r))),
-        other => Negation(Box::new(other)),
-    }
-}
-
-fn distribute_or(a: AST, b: AST) -> AST {
-    match (a, b) {
-        (Conjunction(l1, r1), b) => {
-            Conjunction(
-                Box::new(distribute_or(*l1, b.clone())),
-                Box::new(distribute_or(*r1, b))
-            )
-        }
-        (a, Conjunction(l2, r2)) => {
-            Conjunction(
-                Box::new(distribute_or(a.clone(), *l2)),
-                Box::new(distribute_or(a, *r2))
-            )
-        }
-        (a, b) => Disjunction(Box::new(a), Box::new(b)),
-    }
-}
-
-pub fn cnf(astvec: Vec<AST>) -> Vec<AST> {
+pub fn cnf(nodes: Vec<AST>) -> Vec<AST> {
     let mut clauses = vec![];
-
-    for ast in astvec {
-        match ast {
-            BiImplication(a, b) => {
-                let impl1 = Disjunction(Box::new(negate(*a.clone())), b.clone());
-                let impl2 = Disjunction(Box::new(negate(*b)), a);
-
-                clauses.extend(to_cnf(impl1));
-                clauses.extend(to_cnf(impl2));
-            }
-            _ => {
-                panic!("something went wrong in the tseytin transform");
-            }
-        }
+    for node in nodes {
+        clauses.extend(_cnf(node));
     }
-
     clauses
 }

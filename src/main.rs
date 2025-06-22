@@ -4,7 +4,7 @@ mod vargen;
 mod cnf;
 
 use ast::expr;
-use crate::cnf::cnf;
+use cnf::cnf;
 use crate::tseytin::tseytin;
 
 fn main() {
@@ -16,13 +16,12 @@ fn main() {
             println!("Tseytin Output:");
             let tast = tseytin(ast);
             for (idx, ast) in tast.clone().iter().enumerate() {
-                println!("\tClause {idx} - {ast}");
+                println!("  [Clause {idx}] ‣‣ {ast}");
             }
 
             println!("\nCNF Clauses:");
-            let acnf = cnf(tast);
-            for ast in acnf {
-                println!("{ast}");
+            for ast in cnf(tast) {
+                println!("  ‣ {ast}");
             }
         },
         Err(err) => eprintln!("Error: {:?}", err),
