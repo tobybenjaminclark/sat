@@ -144,7 +144,7 @@ fn biimplication(input: &str) -> IResult<&str, AST> {
 
     fold_many0(
         preceded(
-            ws(alt((tag("<->"), tag("↔"), tag("⇔"), tag("⇒")))), // Add '⇒' here for biimplication
+            ws(alt((tag("<->"), tag("↔"), tag("⇔")))),
             implication,
         ),
         move || lhs.clone(),
