@@ -19,12 +19,12 @@ fn main() {
             println!("Tseytin Output:");
             let tast = tseytin(ast);
             for (idx, ast) in tast.clone().iter().enumerate() {
-                println!("  [Tseytin Clause {idx}] ‣‣ {ast}");
+                println!("   [Tseytin Clause {idx}] ‣‣ {ast}");
             }
 
             println!("\nCNF Clauses:");
-            for (idx, ast) in cnf(tast.clone()).iter().enumerate() {
-                println!("  [CNF Clause {}] ‣‣ {:?}", idx, ast);
+            for (idx, clause) in cnf(tast.clone()).iter().enumerate() {
+                println!("   [Clause {}] ‣‣ ({})", idx, clause.iter().map(|(v, s)| if *s { v.clone() } else { format!("¬{}", v) }).collect::<Vec<_>>().join(" ∨ "));
             }
 
             let sat_clauses = cnf(tast);
@@ -33,8 +33,8 @@ fn main() {
             if dpll(&sat_clauses, &mut assignment) {
                 println!("\nSolver is SAT");
                 for (var, val) in assignment {
-                    if var.starts_with("v") { continue; }
-                    println!("  ‣‣ {} as {}", var, if val {"⊤/True"} else {"⊥/False"});
+                    if var.starts_with("λ") { continue; }
+                    println!("   ‣‣ {} as {}", var, if val {"⊤/True"} else {"⊥/False"});
                 }
             } else {
                 println!("Solver is UNSAT");

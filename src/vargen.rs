@@ -12,7 +12,7 @@ impl VarGen {
 
     fn fresh(&mut self) -> String {
         self.counter += 1;
-        format!("v{}", self.counter)
+        format!("λ{}ⁱ", self.counter)
     }
 }
 static GLOBAL_VAR_GEN: Lazy<Mutex<VarGen>> = Lazy::new(|| Mutex::new(VarGen::new()));
