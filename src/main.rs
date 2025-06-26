@@ -11,7 +11,7 @@ use crate::dpll::{dpll};
 use crate::tseytin::tseytin;
 
 fn main() {
-    let input = "(A → B) ∧ ¬B";
+    let input = "A ∧ ¬A";
     match expr(input) {
         Ok((_rest, ast)) => {
             println!("Parsed Formulae:\n{}\n", ast);
@@ -31,13 +31,13 @@ fn main() {
 
             let mut assignment = HashMap::new();
             if dpll(&sat_clauses, &mut assignment) {
-                println!("\nSolver is SAT");
+                println!("\nSolver is SAT ☺");
                 for (var, val) in assignment {
                     if var.starts_with("λ") { continue; }
                     println!("   ‣‣ {} as {}", var, if val {"⊤/True"} else {"⊥/False"});
                 }
             } else {
-                println!("Solver is UNSAT");
+                println!("\nSolver is UNSAT");
             }
         },
         Err(err) => eprintln!("Error: {:?}", err),
