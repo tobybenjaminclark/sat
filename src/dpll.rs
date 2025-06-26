@@ -1,9 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use crate::cnf::{Literal, Clause, CNF};
 
-/*
- * Unit Clause is a clause containing a singular unit, that does not occur elsewhere.
- */
+
 fn find_unit_clause(clauses: &CNF, assignment: &HashMap<String, bool>) -> Option<Literal> {
     for clause in clauses {
         match clause.as_slice() {
@@ -13,8 +11,6 @@ fn find_unit_clause(clauses: &CNF, assignment: &HashMap<String, bool>) -> Option
     }
     None
 }
-
-
 
 
 
@@ -62,8 +58,6 @@ fn simplify(clauses: &CNF, assignment: &HashMap<String, bool>) -> CNF {
 
 
 
-
-
 pub fn dpll(clauses: &CNF, assignment: &mut HashMap<String, bool>) -> bool {
 
     /* Simplify Clauses */
@@ -73,20 +67,21 @@ pub fn dpll(clauses: &CNF, assignment: &mut HashMap<String, bool>) -> bool {
     if new_clauses.is_empty() { return true; }                               /* ← No clauses left, we are SAT */
     if new_clauses.iter().any(|c| c.is_empty()) { return false; }   /* ← Empty Clause, we are UNSAT */
 
+    /* Unit Propagations */
     while let Some((iden, value)) = find_unit_clause(&new_clauses, &assignment) {
-        println!("Found unit literal: {:?}", iden);
         assignment.insert(iden, value);
         new_clauses = simplify(&new_clauses, &assignment);
         if new_clauses.iter().any(|c| c.is_empty()) { return false; }
     }
 
+    /* Pure Literal Propagation */
     while let Some((iden, value)) = find_pure_literal(&new_clauses, &assignment) {
-        println!("Found pure literal: {:?}", iden);
         assignment.insert(iden, value);
         new_clauses = simplify(&new_clauses, &assignment);
         if new_clauses.iter().any(|c| c.is_empty()) { return false; }
     }
 
+    /* Find something that isn't a Unit or a Pure Literal, then try something */
     let (iden, value) = match new_clauses.iter().flatten().find(|(v, _)| !assignment.contains_key(v)).cloned() {
         Some(lit) => lit,
         None => return true,
